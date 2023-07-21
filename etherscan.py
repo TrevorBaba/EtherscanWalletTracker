@@ -3,8 +3,8 @@ import requests
 import datetime
 
 # Insert your Telegram bot token and Etherscan API key here
-TELEGRAM_TOKEN = '6342306829:AAFZqztXdu3wPbpVuiR6xG58Ci2KtJWIfFc'
-ETHERSCAN_API_KEY = 'IDQD5ANRJT6JYIQCHZSD842YP4EDWEUJ8U'
+TELEGRAM_TOKEN = os.environ.get('TELEGRAM_TOKEN')
+ETHERSCAN_API_KEY = os.environ.get('ETHERSCAN_API_KEY')
 
 
 # Define a function to get the latest transaction for a given Ethereum wallet address
@@ -12,9 +12,9 @@ ETHERSCAN_API_KEY = 'IDQD5ANRJT6JYIQCHZSD842YP4EDWEUJ8U'
 # https://api.etherscan.io/api
 #    ?module=account
 #    &action=tokentx
-#    &address=0x12b6e121Cf45E03f100C296A4Ee2E12C2D53df72&startblock=17737312
+#    &address=0x88AAd0cB142c15cC46A342a9950F4089cfC07f81&startblock=17737312
 #    &sort=desc
-#    &apikey=IDQD5ANRJT6JYIQCHZSD842YP4EDWEUJ8U
+#    &apikey=A34XM7W2TWG41J92HHMNTVSNIBAU3K7QJY
 
 def get_latest_transaction(wallet_address):
     url = f"""https://api.etherscan.io/api?module=account&action=tokentx&address={wallet_address}&startblock=17737000&sort=desc&apikey={ETHERSCAN_API_KEY}"""
@@ -38,5 +38,5 @@ def get_latest_transaction(wallet_address):
         Time: {date_string}"""
 
 
-result = get_latest_transaction('0x12b6e121Cf45E03f100C296A4Ee2E12C2D53df72')
+result = get_latest_transaction('0x1fB8DD0Ab9608Bd5f9E709B6B85c0EEc96997066')
 print(result)

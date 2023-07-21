@@ -1,11 +1,16 @@
 import datetime
+import pytz
 import os
 import requests
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from dotenv import load_dotenv
+
+# Load the environment variables from the .env file
+load_dotenv()
 
 # Insert your Telegram bot token and Etherscan API key here
-TELEGRAM_TOKEN = '6342306829:AAFZqztXdu3wPbpVuiR6xG58Ci2KtJWIfFc'
-ETHERSCAN_API_KEY = 'IDQD5ANRJT6JYIQCHZSD842YP4EDWEUJ8U'
+TELEGRAM_TOKEN = os.environ.get('TELEGRAM_TOKEN')
+ETHERSCAN_API_KEY = os.environ.get('ETHERSCAN_API_KEY')
 
 wallet_hash = {}
 
@@ -31,7 +36,7 @@ def poll_wallet(context):
         tx = get_latest_transaction(wallet_address)
         if tx['hash'] != wallet_hash[wallet_address]:
             wallet_hash[wallet_address] = tx['hash']
-            message = format_message(tx)
+            message = format_message(tx, wallet_address)
             context.bot.send_message(chat_id=context.job.context, text=message)
         # else:
         #     context.bot.send_message(chat_id=context.job.context, text="hello world")
@@ -52,19 +57,30 @@ def echo(update, context):
     latest_tx = get_latest_transaction(wallet_address)
     if wallet_address not in wallet_hash:
         wallet_hash[wallet_address] = latest_tx['hash']
-    message = format_message(latest_tx)
+    message = format_message(latest_tx, wallet_address)
     context.bot.send_message(chat_id=update.effective_chat.id, text=message)
 
-def format_message(latest_tx):
+def format_message(latest_tx, wallet_address):
     timestamp = int(latest_tx['timeStamp'])
-    dt_object = datetime.datetime.fromtimestamp(timestamp)
-    date_string = dt_object.strftime('%Y-%m-%d %H:%M:%S')
+    utc_datetime = datetime.datetime.utcfromtimestamp(timestamp)
+    pst_timezone = pytz.timezone('America/Los_Angeles')
+    # Convert the datetime to PST
+    pst_datetime = utc_datetime.astimezone(pst_timezone)
+    date_string = pst_datetime.strftime('%Y-%m-%d %H:%M:%S')
+
+    # Check if it is a buy or sell
+    recipient = latest_tx['to']
+    if wallet_address.lower() == recipient.lower():
+        type = "BUY"
+    else:
+        type = "SELL"
     message = f"""
-    Latest transaction\n
-    Token Name: {latest_tx['tokenName']} ({latest_tx['tokenSymbol']})\n
-    Amount in {latest_tx['tokenName']}: {latest_tx['value']}\n
-    Time: {date_string}
-    Contract Address: {latest_tx['contractAddress']}"""
+Latest transaction by {wallet_address}
+{type}
+Token Name: {latest_tx['tokenName']} ({latest_tx['tokenSymbol']})
+Amount in {latest_tx['tokenName']}: {latest_tx['value']}
+Time: {date_string}
+Contract Address: {latest_tx['contractAddress']}"""
     return message
 
 # Create a Telegram bot and add handlers
